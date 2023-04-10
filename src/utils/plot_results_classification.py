@@ -371,7 +371,7 @@ def main():
     ap.add_argument('--results_file', help="File containing the metrics of the experiment", type=str)
     ap.add_argument('--results_folder', help="Folder containing the files of the results of the experiment", type=str)
     ap.add_argument('--selected_epoch', default=0, help="Particular epoch to compute the different metrics", type=int)
-    ap.add_argument('--last_epochs_use', default=10, help="Last epochs to use to compute the mean metrics", type=int)
+    ap.add_argument('--last_epochs_use', default=1, help="Last epochs to use to compute the mean metrics", type=int)
     ap.add_argument('--plot_curves', default='False', help="Boolean to plot the loss and metrics curves", type=str)
     ap.add_argument('--plot_val_metrics', default='False', help="True if wanted to compute the val metrics and plot it. If there are no validation metrics, this argument should be False", type=str)
     ap.add_argument('--plot_sparsity_rate', default='False', help="True if want to plot the sparsity rate over the epochs", type=str)
