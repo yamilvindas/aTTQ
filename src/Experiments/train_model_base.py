@@ -37,6 +37,7 @@ from labml_nn.optimizers import noam
 
 from src.utils.GCE import GeneralizedCrossEntropy
 from src.utils.raw_audio_tools import min_max_audio_lenght
+from src.utils.download_exp_data import download_ESR
 from src.utils.tools import change_data_samples_path, string_to_bool, train_val_split_stratified, balance_dataset
 from src.DataManipulation.mnist_data import put_MNIST_data_generic_form, MNISTDatasetWrapper
 from src.DataManipulation.eeg_data import EEG_EpilepticSeizureRecognition, loadFromHDF5_EEG
@@ -180,6 +181,9 @@ class Experiment(object):
 
         # Dataset loading
         if (self.dataset_type.lower() == 'esr'):
+            # Downloding the dataset if it does not exist
+            download_ESR()
+
             # Parameters for binarization of the dataset
             if ('binarizeDS' not in parameters_exp):
                 parameters_exp['binarizeDS'] = True

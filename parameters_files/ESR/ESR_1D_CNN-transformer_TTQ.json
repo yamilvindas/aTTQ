@@ -9,7 +9,7 @@
   "in_channels": 1,
 
   "lr": 1e-3,
-  "nb_repetitions": 10,
+  "nb_repetitions": 1,
   "batch_size_train": 64,
   "batch_size_test": 64,
   "weight_decay": 0,

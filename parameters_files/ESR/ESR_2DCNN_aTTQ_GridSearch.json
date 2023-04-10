@@ -13,7 +13,7 @@
   "window": "blackman",
 
   "lr": 1e-3,
-  "nb_repetitions": 10,
+  "nb_repetitions": 1,
   "batch_size_train": 32,
   "batch_size_test": 32,
   "weight_decay": 1e-7,

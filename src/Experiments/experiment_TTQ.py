@@ -40,6 +40,7 @@ from src.Experiments.train_model_base import Experiment as ExperimentBase
 
 from src.utils.GCE import GeneralizedCrossEntropy
 from src.utils.model_compression import approx_weights, approx_weights_fc
+from src.utils.download_exp_data import download_FP_models
 
 from src.Models.CNNs.mnist_CNN import weights_init
 from src.Models.CNNs.time_frequency_simple_CNN import TimeFrequency2DCNN # Network used for training
@@ -251,6 +252,10 @@ class Experiment(ExperimentBase):
         return params
 
     def load_weights_model(self):
+        # Verifying if the model's weights file exists
+        if not (os.path.exists(self.model_weights_file)):
+            download_FP_models(model_to_use=self.model_to_use, dataset=self.dataset_type)
+
         # Loading the data of a model
         model_data = torch.load(self.model_weights_file, map_location=torch.device('cpu'))
 
