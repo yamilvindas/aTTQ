@@ -19,70 +19,8 @@ import pickle
 import argparse
 import numpy as np
 import torch
+from src.utils.model_compression import get_params_groups_to_quantize
 
-def get_quantized_layers(used_model, model):
-    """
-        Get the names of the layers that have been quantized
-
-        Arguments:
-        ----------
-        used_model: str
-            Name of the used model in the experiment
-        model: torch model
-            Model from which we want to get the quantized layers names
-
-        Returns:
-        --------
-        name_quantized_layers: list
-            List with the names of the quantized layers.
-    """
-    #======================================================================#
-    #==========================2D CNN MNIST==========================#
-    #======================================================================#
-    name_quantized_layers = []
-    if (used_model.lower() == 'mnist2dcnn'):
-        # Parameters to quantize
-        # Only the convolutions
-        for n, p in model.named_parameters():
-            if ('conv' in n) and ('bias' not in n):
-                name_quantized_layers.append(n)
-
-    #======================================================================#
-    #==========================1D CNN-Transformer==========================#
-    #======================================================================#
-    elif (used_model.lower() == 'rawaudiomultichannelcnn'):
-        # Freeze the first layer
-        #model.conv1.weight.requires_grad = False
-
-        # Separation of the different parameters
-        transformer_params = []
-        weights_to_be_quantized = []
-        bn_weights = []
-        biases = []
-        for n, p in model.named_parameters():
-            # Parameters to quantize: all the conv layers except the first one
-            # Convolutions and transformer layers
-            if (('conv2' in n) and ('bias' not in n)) or ('transformer' in n and 'linear2.weight' in n):
-                name_quantized_layers.append(n)
-
-    #======================================================================#
-    #=============================2D CNN HITS =============================#
-    #======================================================================#
-    elif (used_model.lower() == 'timefrequency2dcnn'):
-        for n, p in model.named_parameters():
-            # Parameters to quantize
-            # Convolutions except the first one
-            if ('conv' in n and 'conv_1' not in n) and ('bias' not in n):
-                name_quantized_layers.append(n)
-
-
-    #======================================================================#
-    #============================ Other models ============================#
-    #======================================================================#
-    else:
-        raise ValueError("Model to use {} is not valid for quantization".format(used_model))
-
-    return name_quantized_layers
 
 def nb_bits_store_tensor_csr(tensor, is_model_ternarized=False, ternarized=False):
     """
@@ -174,7 +112,7 @@ def get_nb_bits_model(exp_results_folder, is_model_ternarized):
             model = model_dict['model']
 
             # Getting the list of the layers that have been quantized
-            quantized_layers = get_quantized_layers(params['model_to_use'], model)
+            params_groups, quantized_layers = get_params_groups_to_quantize(model, params['model_to_use'])
 
             # Iterating over the layers
             for name, param in model.named_parameters():

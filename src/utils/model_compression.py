@@ -110,3 +110,137 @@ def get_grads_two_thresh(kernel_grad, kernel, w_r, w_l, x, y):
     # scaled kernel grad and grads for scaling factors (w_p, w_n)
     return w_r*a*kernel_grad + w_l*b*kernel_grad + 1.0*c*kernel_grad,\
         (a*kernel_grad).sum(), (b*kernel_grad).sum()
+
+
+def get_params_groups_to_quantize(model, model_to_use):
+    """
+        Get the groups of the parameters to quantize.
+
+        Arguments:
+        ----------
+        model: torch model
+            Torch model from which we want to get the parameters to quantize
+        model_to_use: str
+            Type of the model to use. Three choices: mnist2dcnn, rawaudiomultichannelcnn,
+            and timefrequency2dcnn
+
+        Returns:
+        --------
+
+    """
+    #======================================================================#
+    #================================2D CNN================================#
+    #======================================================================#
+    names_params_to_be_quantized = []
+    if (model_to_use.lower() == 'mnist2dcnn'):
+        # Last FC layer
+        weights_last_fc = [model.fc2.weight]
+
+        # Parameters to quantize
+        # Only the convolutions
+        weights_to_be_quantized = [p for n, p in model.named_parameters() if ('conv' in n) and ('bias' not in n)]
+        names_params_to_be_quantized = [n for n, p in model.named_parameters() if ('conv' in n) and ('bias' not in n)]
+
+        # Parameters of batch_norm layers
+        bn_weights = [p for n, p in model.named_parameters() if 'norm' in n and 'weight' in n]
+
+        # Biases
+        biases = [p for n, p in model.named_parameters() if 'bias' in n]
+
+        params = {
+                    'LastFCLayer': {'params': weights_last_fc},
+                    'ToQuantize': {'params': weights_to_be_quantized},
+                    'BNWeights': {'params': bn_weights},
+                    'Biases': {'params': biases}
+                 }
+
+    #======================================================================#
+    #==========================1D CNN-Transformer==========================#
+    #======================================================================#
+    elif (model_to_use.lower() == 'rawaudiomultichannelcnn'):
+        # Separation of the different parameters
+        transformer_params = []
+        weights_to_be_quantized = []
+        bn_weights = []
+        biases = []
+        for n, p in model.named_parameters():
+            # Boolean to see if the parameter has been already associated to a group
+            associated_param_to_group = False
+
+            # Parameters to quantize
+            # Convolution 2 and transformer layers
+            if (('conv2' in n) and ('bias' not in n)) or ('transformer' in n and 'linear2.weight' in n):
+                weights_to_be_quantized.append(p)
+                names_params_to_be_quantized.append(n)
+                associated_param_to_group = True
+
+            # Parameters of batch_norm layers
+            if ('norm' in n) and ('weight' in n):
+                bn_weights.append(p)
+                associated_param_to_group = True
+
+            # Biases
+            if ('bias' in n):
+                biases.append(p)
+                associated_param_to_group = True
+
+            # Transformer parameters
+            # Convolutions and transformer layers
+            if (not associated_param_to_group):
+                transformer_params.append(p)
+
+        params = {
+                    'Transformer': {'params': transformer_params},
+                    'ToQuantize': {'params': weights_to_be_quantized},
+                    'BNWeights': {'params': bn_weights},
+                    'Biases': {'params': biases}
+                 }
+
+    #======================================================================#
+    #=============================2D CNN HITS =============================#
+    #======================================================================#
+    elif (model_to_use.lower() == 'timefrequency2dcnn'):
+        # Separation of the different parameters
+        other_params = []
+        weights_to_be_quantized = []
+        bn_weights = []
+        biases = []
+        for n, p in model.named_parameters():
+            # Boolean to see if the parameter has been already associated to a group
+            associated_param_to_group = False
+
+            # Parameters to quantize
+            # Convolutions except the first one
+            if ('conv' in n and 'conv_1' not in n) and ('bias' not in n):
+                weights_to_be_quantized.append(p)
+                names_params_to_be_quantized.append(n)
+                associated_param_to_group = True
+
+            # Parameters of batch_norm layers
+            if ('Norm' in n) and ('weight' in n):
+                bn_weights.append(p)
+                associated_param_to_group = True
+
+            # Biases
+            if ('bias' in n):
+                biases.append(p)
+                associated_param_to_group = True
+
+            # Other params
+            if (not associated_param_to_group):
+                other_params.append(p)
+
+        params = {
+                    'OtherParams': {'params': other_params},
+                    'ToQuantize': {'params': weights_to_be_quantized},
+                    'BNWeights': {'params': bn_weights},
+                    'Biases': {'params': biases}
+                 }
+
+    #======================================================================#
+    #============================ Other models ============================#
+    #======================================================================#
+    else:
+        raise ValueError("Model to use {} is not valid for quantization".format(model_to_use))
+
+    return params, names_params_to_be_quantized

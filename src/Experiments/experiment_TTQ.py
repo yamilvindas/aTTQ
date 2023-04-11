@@ -39,7 +39,7 @@ from labml_nn.optimizers import noam
 from src.Experiments.train_model_base import Experiment as ExperimentBase
 
 from src.utils.GCE import GeneralizedCrossEntropy
-from src.utils.model_compression import approx_weights, approx_weights_fc
+from src.utils.model_compression import approx_weights, approx_weights_fc, get_params_groups_to_quantize
 from src.utils.download_exp_data import download_FP_models
 
 from src.Models.CNNs.mnist_CNN import weights_init
@@ -131,124 +131,8 @@ class Experiment(ExperimentBase):
 
 
     def get_params_groups_quantization(self):
-        """
-            Inspired from https://github.com/TropComplique/trained-ternary-quantization/blob/master/ttq_densenet_small/get_densenet.py
-        """
-        #======================================================================#
-        #================================2D CNN================================#
-        #======================================================================#
-        self.names_params_to_be_quantized = []
-        if (self.model_to_use.lower() == 'mnist2dcnn'):
-            # Last FC layer
-            weights_last_fc = [self.model.fc2.weight]
-
-            # Parameters to quantize
-            # Only the convolutions
-            weights_to_be_quantized = [p for n, p in self.model.named_parameters() if ('conv' in n) and ('bias' not in n)]
-            self.names_params_to_be_quantized = [n for n, p in self.model.named_parameters() if ('conv' in n) and ('bias' not in n)]
-
-            # Parameters of batch_norm layers
-            bn_weights = [p for n, p in self.model.named_parameters() if 'norm' in n and 'weight' in n]
-
-            # Biases
-            biases = [p for n, p in self.model.named_parameters() if 'bias' in n]
-
-            params = {
-                        'LastFCLayer': {'params': weights_last_fc},
-                        'ToQuantize': {'params': weights_to_be_quantized},
-                        'BNWeights': {'params': bn_weights},
-                        'Biases': {'params': biases}
-                     }
-
-        #======================================================================#
-        #==========================1D CNN-Transformer==========================#
-        #======================================================================#
-        elif (self.model_to_use.lower() == 'rawaudiomultichannelcnn'):
-            # Separation of the different parameters
-            transformer_params = []
-            weights_to_be_quantized = []
-            bn_weights = []
-            biases = []
-            for n, p in self.model.named_parameters():
-                # Boolean to see if the parameter has been already associated to a group
-                associated_param_to_group = False
-
-                # Parameters to quantize
-                # Convolution 2 and transformer layers
-                if (('conv2' in n) and ('bias' not in n)) or ('transformer' in n and 'linear2.weight' in n):
-                    weights_to_be_quantized.append(p)
-                    self.names_params_to_be_quantized.append(n)
-                    associated_param_to_group = True
-
-                # Parameters of batch_norm layers
-                if ('norm' in n) and ('weight' in n):
-                    bn_weights.append(p)
-                    associated_param_to_group = True
-
-                # Biases
-                if ('bias' in n):
-                    biases.append(p)
-                    associated_param_to_group = True
-
-                # Transformer parameters
-                # Convolutions and transformer layers
-                if (not associated_param_to_group):
-                    transformer_params.append(p)
-
-            params = {
-                        'Transformer': {'params': transformer_params},
-                        'ToQuantize': {'params': weights_to_be_quantized},
-                        'BNWeights': {'params': bn_weights},
-                        'Biases': {'params': biases}
-                     }
-
-        #======================================================================#
-        #=============================2D CNN HITS =============================#
-        #======================================================================#
-        elif (self.model_to_use.lower() == 'timefrequency2dcnn'):
-            # Separation of the different parameters
-            other_params = []
-            weights_to_be_quantized = []
-            bn_weights = []
-            biases = []
-            for n, p in self.model.named_parameters():
-                # Boolean to see if the parameter has been already associated to a group
-                associated_param_to_group = False
-
-                # Parameters to quantize
-                # Convolutions except the first one
-                if ('conv' in n and 'conv_1' not in n) and ('bias' not in n):
-                    weights_to_be_quantized.append(p)
-                    self.names_params_to_be_quantized.append(n)
-                    associated_param_to_group = True
-
-                # Parameters of batch_norm layers
-                if ('Norm' in n) and ('weight' in n):
-                    bn_weights.append(p)
-                    associated_param_to_group = True
-
-                # Biases
-                if ('bias' in n):
-                    biases.append(p)
-                    associated_param_to_group = True
-
-                # Other params
-                if (not associated_param_to_group):
-                    other_params.append(p)
-
-            params = {
-                        'OtherParams': {'params': other_params},
-                        'ToQuantize': {'params': weights_to_be_quantized},
-                        'BNWeights': {'params': bn_weights},
-                        'Biases': {'params': biases}
-                     }
-
-        #======================================================================#
-        #============================ Other models ============================#
-        #======================================================================#
-        else:
-            raise ValueError("Model to use {} is not valid for quantization".format(self.model_to_use))
-
+        # Getting the groups of parameters to quantize
+        params, self.names_params_to_be_quantized = get_params_groups_to_quantize(self.model, self.model_to_use)
         return params
 
     def load_weights_model(self):
