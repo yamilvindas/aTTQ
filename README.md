@@ -2,7 +2,7 @@
 
 ## I) Introduction
 
-GitHub repository for the sumbission of the paper *An asymmetric heuristic for trained ternary quantization based on the weights' statistics* for Machine Learning for Healthcare (MLHJ) 2023.
+GitHub repository for the sumbission of the paper *An asymmetric heuristic for trained ternary quantization based on the statistics of the weights: an application to medical signal classification* for Pattern Recognition Letters.
 
 ## II) Configuration
 
