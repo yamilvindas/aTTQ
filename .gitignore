@@ -3,3 +3,4 @@ data/MNIST/
 results/*ESR*
 results/*MNIST*
 *__pycache__*
+*.pyc
