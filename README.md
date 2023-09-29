@@ -68,6 +68,10 @@ The results obtained in the previous experiments before, can be plotted and visu
 - **getCompressionRate.py**: allows to get the compression rates and compression rates of a model with respect to another one. Example (execution from the folder *src/utils/*):
 
                             python getCompressionRate.py --exp_folder_model_a ../../results/MNIST_2D_CNN_FP/ --is_model_a_ternarized False --exp_folder_model_b ../../results/MNIST_aTTQ/ --is_model_b_ternarized True
+  
+- **getEnergyConsumption.py**: computes the energy consumption of a model Model_Q with respect to a reference Model_FP. Example (execution from the folder *src/utils/*):
+
+                            python getEnergyConsumption.py --exp_results_folder_ref PATH/TO/MODEL_FP/ --exp_results_folder PATH/TO/MODEL_Q/
 
 - **generateMatrixATTQ.py**: allows to generate two matrices contaiing the sparsity rates and classification performances of the results of experiment 2. Example (execution from the folder *src/utils/*):
 
